@@ -32,8 +32,10 @@ const start = async () => {
     const publicPath = Path.join(__dirname,'../public')
     console.log(publicPath)
 
+    const port = process.env.PORT || 3000
+
     const server = Hapi.server({ 
-        port: 4000 ,
+        port ,
         routes: {
             files: {
                 relativeTo: publicPath
