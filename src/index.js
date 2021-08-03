@@ -1,0 +1,86 @@
+const Bcrypt = require('bcrypt');
+const Hapi = require('@hapi/hapi');
+const Path = require('path');
+
+const users = {
+    john: {
+        username: 'john',
+        password: '$2a$10$iqJSHD.BGr0E2IxQwYgJmeP3NvhPrXAeLSaGCj6IR/XU5QtjVu5Tm',   // 'secret'
+        name: 'John Doe',
+        id: '2133d32a'
+    }
+};
+
+const validate = async (request, username, password) => {
+
+    console.log(request.path)
+
+    const user = users[username];
+    if (!user && require.path === '/logout') {
+        return { credentials: null, isValid: false };
+    }
+    
+
+    let isValid = await Bcrypt.compare(password, user.password);
+    const credentials = { id: user.id, name: user.name };
+
+    return { isValid, credentials };
+};
+
+const start = async () => {
+
+    const publicPath = Path.join(__dirname,'../public')
+    console.log(publicPath)
+
+    const server = Hapi.server({ 
+        port: 4000 ,
+        routes: {
+            files: {
+                relativeTo: publicPath
+            }
+        }
+    });
+
+    await server.register(require('@hapi/basic'));
+    await server.register(require('@hapi/inert'));
+
+    server.auth.strategy('simple', 'basic', { validate });
+
+    server.route({
+        method: 'GET',
+        path: '/',
+        handler: function (request, h) {
+
+            return h.file('index.html');
+        }
+    });
+
+    server.route({
+        method: 'GET',
+        path: '/auth',
+        options: {
+            auth: 'simple'
+        },
+        handler: function (request, h) {
+
+            return 'Now, You are logged';
+        }
+    });
+
+    server.route({
+        method: 'GET',
+        path: '/logout',
+        options: {
+            auth: 'simple'
+        },
+        handler: function (request, h) {
+            return h.response('You are logged out now').code(401)
+        }
+    });
+
+    await server.start();
+
+    console.log('server running at: ' + server.info.uri);
+};
+
+start();
