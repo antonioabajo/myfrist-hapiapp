@@ -1,6 +1,7 @@
 const Bcrypt = require('bcrypt');
 const Hapi = require('@hapi/hapi');
 const Path = require('path');
+const AllowedTerminals = require('./action/allowed_terminals')
 
 const users = {
     john: {
@@ -57,6 +58,24 @@ const start = async () => {
         }
     });
 
+
+    server.route({
+        method: 'GET',
+        path: '/action/{action}/{mac}/{ip}',
+        handler: function (request, h) {
+            let terminalAllowed = 0
+            switch(request.params.action){
+                case 'checkmac':
+                    let allowedTerminals = AllowedTerminals.getInstance()
+                    terminalAllowed = allowedTerminals.isTerminalAllowed(request.params.mac,request.params.ip)
+            }
+            return terminalAllowed
+
+           
+           return "hola caracola " + request.params.action + " " + request.params.mac;
+        }
+    });
+
     server.route({
         method: 'GET',
         path: '/auth',
@@ -77,6 +96,17 @@ const start = async () => {
         },
         handler: function (request, h) {
             return h.response('You are logged out now').code(401)
+        }
+    });
+
+    server.route({
+        method: 'GET',
+        path: '/js/{filename}',
+        handler: {
+            file: function (request) {
+                console.log(request.params.filename)
+                return 'js/' +request.params.filename;
+            }
         }
     });
 
