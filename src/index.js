@@ -61,18 +61,27 @@ const start = async () => {
 
     server.route({
         method: 'GET',
-        path: '/action/{action}/{mac}/{ip}',
+        path: '/action/',
         handler: function (request, h) {
             let terminalAllowed = 0
-            switch(request.params.action){
+            let allowedTerminals = AllowedTerminals.getInstance()
+            const params = request.query
+            console.log(params)
+            switch(params.action){
                 case 'checkmac':
-                    let allowedTerminals = AllowedTerminals.getInstance()
-                    terminalAllowed = allowedTerminals.isTerminalAllowed(request.params.mac,request.params.ip)
+                    terminalAllowed = allowedTerminals.isTerminalAllowed(params.mac,params.ip)
+                    break
+                case 'allow':
+                    terminalAllowed = allowedTerminals.allowTerminal(params.mac,params.ip)
+                    break
+                case 'disallow':
+                    terminalAllowed = allowedTerminals.disallowTermninal(params.mac,params.ip)
+                    break
+                case 'getterminals':
+                    terminalAllowed = allowedTerminals.loadTerminalsAllowed()
+                    break
             }
             return terminalAllowed
-
-           
-           return "hola caracola " + request.params.action + " " + request.params.mac;
         }
     });
 
